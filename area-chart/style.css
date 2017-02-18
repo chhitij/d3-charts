@@ -1,0 +1,36 @@
+  body {
+      background: #0d0d0d;
+  }
+  
+  .layer,
+  .layer path {
+      stroke-linejoin: round;
+  }
+  
+  .tooltip {
+      background: #fff;
+      border-radius: 5px;
+      display: none;
+      position: absolute;
+      height: 45px;
+      min-width: 100px;
+      padding: 5px 10px;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      color: gray;
+  }
+  
+  .tooltip .title {
+      font-weight: bold;
+  }
+  
+  .tick > text,
+  .tick > line {
+      fill: white;
+  }
+  
+  .domain,
+  line {
+      stroke: white
+  }
