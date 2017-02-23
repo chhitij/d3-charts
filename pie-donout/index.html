@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>Step 3 - Adding a Legend</title>
+    <link rel="stylesheet" href="normalize.css">
+    <style>
+      .legend {                                                   /* NEW */
+        font-size: 12px;                                          /* NEW */
+      }                                                           /* NEW */
+      rect {                                                      /* NEW */
+        stroke-width: 2;                                          /* NEW */
+      }
+      body{background:rgba(0, 0, 0, 0.01);margin:7em;}
+      div#chart {
+        width: 1200px;
+        height: 500px;
+        margin: auto;
+        padding: 66px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+     #glow {
+          width: 198px;
+          height: 194px;
+          position: absolute;
+          left: 44%;
+          top: 316px;
+          right: 27px;
+          z-index: -1;
+          /* display: flex; */
+          /* justify-content: center; */
+          height: 200px;
+          border-radius: 100%;
+          border: 0.8em solid #ccc;
+          box-shadow: 0 0 2em white;
+          animation: glowAnim 1.5s infinite ease;
+      }
+
+        @keyframes glowAnim {
+          0% { box-shadow:0 0 1em #ccc; }
+          50% { box-shadow: 0 0 6em #41a7ff;
+              border-color: #a1d4ff; }
+          100% { box-shadow:0 0 1em #ccc; }
+        }
+
+        .center-txt {
+          text-anchor: middle;
+          font-size: 4em;
+          font-family: serif;
+          fill:#fff;
+          }
+        .shadow {
+          -webkit-filter: drop-shadow( 0px 3px 3px rgba(0,0,0,.5) );
+          filter: drop-shadow( 0px 3px 3px rgba(0,0,0,.5) );
+        }
+    </style>
+  </head>
+  <body>
+     <div id="chart"></div>
+   <!--  <div id='glow'></div> -->
+    <script src="https://d3js.org/d3.v4.min.js"></script>
+    <script>
+
+    function drawDonout() {
+       var dataset = [
+         { label: 'Productive', count: 40 },
+          { label: 'Nonprod', count: 10 },
+          { label: 'DesktopTime', count: 30 },
+          { label: 'IdealTime', count: 20 },
+        ];
+
+        // default Obj for default initial value
+        var initialValue =  {
+            innitailArray:function() {
+             var initVal = pie(dataset)[dataset.findIndex(function(ele) {
+                 return ele.label == 'Productive'})]
+                 return [initVal];
+           },
+             defaultIndex:function(){
+              var initValObj = dataset.findIndex(function(ele) {
+              return ele.label == 'Productive'
+             })
+               return initValObj;
+            }
+         }
+
+        var innerCircle = ['innerCircle']
+        var innerText;
+        var width = 250;
+        var height = 250;
+        var chart_m = width / dataset.length / 2 * 0.14;
+        var radius = Math.min(width, height) / 2;
+        var donutWidth = 15;
+        var legendRectSize = 18;
+        var legendSpacing = radius - 8;
+        var tau = 2 * Math.PI;
+       /* var color =  d3.scaleOrdinal()
+                    .domain([0, dataset.length])
+                    .range(['#b7951b','#bd3e31','#FF0036','#464646',
+                    ]);*/
+        var svg = d3.select('#chart')
+          .append('svg')
+          .attr('width', (radius + chart_m) * 2)
+          .attr('height',(radius + chart_m) * 2)
+          .append('g')
+          .attr('class','shadow')
+          .attr('transform', 'translate(' + (radius + chart_m) +
+            ',' + (radius + chart_m)  + ')');
+
+        var arc = d3.arc()
+          .innerRadius(radius - donutWidth)             // NEW
+          .outerRadius(radius);
+
+        var pie = d3.pie()
+          .value(function(d) { return d.count; })
+          .sort(null)
+          .padAngle(.02);
+
+        // Draw donout
+        var pathData = svg.selectAll('path')
+          .data(pie(dataset))
+          .enter()
+          .append('path')
+          .attr('d', arc)
+          .attr('fill', function(d, i) {
+           if(d.data.label == 'Productive') {
+              return '#FF0036';
+           }
+            return '#3E3E3E';
+          })
+          .on('mouseover', function(d, i) {
+              if(d.data.label !== 'Productive'){
+                resetAllCenterText();
+               }
+              innerProperty([d], i);
+              pathArcChange(d3.select(this), 1);
+              d3.event.stopPropagation();
+            })
+          .on('mouseout',function(d,i){
+             if(d.data.label !== 'Productive'){
+              resetAllCenterText();
+              innerProperty(initialValue.innitailArray(),
+              initialValue.defaultIndex());
+             }
+             pathArcChange(d3.select(this), 0);
+             d3.event.stopPropagation();
+           });
+
+        /*Add inner circle */
+      var innerCircle =  svg.selectAll('.innerCircle')
+          .data(innerCircle)
+          .enter()
+          .append('g')
+          .attr('class', 'innerlegent');
+
+       innerCircle.append('circle')
+        .attr("r", radius * 0.8)
+        .style("fill", "rgba(13, 8, 8, 0.92)")
+        .style('cursor','pointer')
+        .on('mouseover',function(d, i) {
+                    d3.select(this)
+                        .transition()
+                        .attr("r", radius * 0.7);
+                })
+
+          .on('mouseout',function(d, i) {
+                    d3.select(this)
+                        .transition()
+                        .duration(500)
+                        .ease(d3.easeElastic)
+                        .attr("r", radius * 0.8);
+                });
+
+        // Append inner Text  on inside circle
+     var innerProperty = function(innerData , index) {
+
+         innerText =  svg.selectAll('.innerText');
+         innerText.data(innerData)
+         .enter()
+         .append('g')
+         .attr('class' ,'innerText')
+         .append('text')
+         .attr('class', 'center-txt')
+         .attr('y', radius * 0.1)
+         .text(function(d, i) {
+                return d.data.count;
+           })
+
+        innerText =  svg.selectAll('.innerTextString');
+         innerText.data(innerData)
+         .enter()
+         .append('g')
+         .attr('class' ,'innerTextString')
+         .append('text')
+         .attr('class', 'center-txt-string')
+         .attr('y', radius * 0.3)
+         .attr('x', radius * -0.25)
+         .style('fill','#ff0036')
+         .text(function(d, i) {
+                return d.data.label;
+           })
+
+         }
+         // Initilize the function for default show
+         innerProperty(initialValue.innitailArray(),
+         initialValue.defaultIndex());
+
+
+         var resetAllCenterText = function() {
+           d3.select('.innerText').remove();
+           d3.select('.innerTextString').remove();
+         }
+       // Path Arc chages
+         var pathArcChange = function(path, dir) {
+            switch(dir) {
+                case 0:
+                    pathData.attr('fill',function(d){
+                      if(d.data.label == 'Productive') {
+                              return '#FF0036';
+                           }
+                            return '#3E3E3E';
+                    });
+                    path.transition()
+                        .duration(500)
+                        .ease(d3.easeElastic)
+                        .attr('fill', function(d){
+                           if(d.data.label == 'Productive') {
+                              return '#FF0036';
+                           }
+                            return '#3E3E3E';
+                        })
+                        .attr('d', arc
+                            .innerRadius(radius - donutWidth)
+                            .outerRadius(radius)
+                        );
+                    break;
+                case 1:
+                    pathData.attr('fill','#3E3E3E')
+                    path.transition()
+                        .duration(500)
+                        .ease(d3.easeElastic)
+                        .attr('fill', function(d) {
+                           return '#FF0036';
+                        })
+                        d3.interval(function() {
+                          foreground.transition()
+                              .duration(750)
+                              .attrTween("d", arcTween(tau/5));
+                        }, 1500)
+                        .attr('d', arc
+                            .innerRadius(radius - donutWidth)
+                            .outerRadius(radius * 1.02)
+                        );
+
+                    break;
+            }
+        }
+      /* setTimeout(function(){
+             document.getElementById('glow').style.display = 'none';
+          },1000)*/
+
+   }
+  drawDonout();
+    </script>
+  </body>
+</html>
